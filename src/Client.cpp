@@ -18,23 +18,31 @@ bool Client::setupSensorPoller(std::string serverAddr)
       return false;
    }
    
+   std::cout<<"Setup Sensors"<<std::endl;
    /* Setup sensor monitoring */
    settings = new RTIMUSettings("RTIMULib");
    imu = RTIMU::createIMU(settings);
+  
    pressure = RTPressure::createPressure(settings);
    humidity = RTHumidity::createHumidity(settings);
 
    imu->IMUInit();
-   
+   imu->setSlerpPower(0.02);
+   imu->setGyroEnable(true);
+   imu->setAccelEnable(true);
+   imu->setCompassEnable(true);
+
    //  set up pressure sensor
    if (pressure != NULL)
    {
+      std::cout<<"Init Pressure"<<std::endl;
       pressure->pressureInit();
    }
    //  set up humidity sensor
    if (humidity != NULL)
    {
-       humidity->humidityInit();
+      std::cout<<"Init Humidity"<<std::endl;
+      humidity->humidityInit();
    }
    return true;
 }
@@ -59,19 +67,19 @@ void Client::runSensorPoller()
       UA_Float tempIn = imuData.temperature;
       UA_Variant_setScalarCopy(myVariant, &tempIn, &UA_TYPES[UA_TYPES_FLOAT]);
       UA_NodeId tempNodeId = UA_NODEID_STRING(1,C_TEXT("Temperature"));
-      UA_StatusCode status = UA_Client_writeValueAttribute(client,tempNodeId, myVariant);
+      //UA_StatusCode status = UA_Client_writeValueAttribute(client,tempNodeId, myVariant);
       
       //Write Pressure
-      UA_Float pressIn = imuData.pressure;
-      UA_Variant_setScalarCopy(myVariant, &pressIn, &UA_TYPES[UA_TYPES_FLOAT]);
-      UA_NodeId pressNodeId = UA_NODEID_STRING(1,C_TEXT("Pressure"));
-      status = UA_Client_writeValueAttribute(client,pressNodeId, myVariant);
+      //UA_Float pressIn = imuData.pressure;
+      //UA_Variant_setScalarCopy(myVariant, &pressIn, &UA_TYPES[UA_TYPES_FLOAT]);
+      //UA_NodeId pressNodeId = UA_NODEID_STRING(1,C_TEXT("Pressure"));
+      //status = UA_Client_writeValueAttribute(client,pressNodeId, myVariant);
       
       //Write Humidity
-      UA_Float humidIn = imuData.humidity;
-      UA_Variant_setScalarCopy(myVariant, &humidIn, &UA_TYPES[UA_TYPES_FLOAT]);
-      UA_NodeId humidNodeId = UA_NODEID_STRING(1,C_TEXT("Humidity"));
-      status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
+      //UA_Float humidIn = imuData.humidity;
+      //UA_Variant_setScalarCopy(myVariant, &humidIn, &UA_TYPES[UA_TYPES_FLOAT]);
+      //UA_NodeId humidNodeId = UA_NODEID_STRING(1,C_TEXT("Humidity"));
+      //status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
 }
 /* Destructor */
 Client::~Client (){}
