@@ -9,13 +9,17 @@ Server::Server(){}
 static UA_StatusCode readCurrentTemp(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
    const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
 {
+   /* Cast the Server object */
    server::Server * ua_server = (server::Server*)nodeContext;
+   /* get data */
    RTIMU_DATA imuData = ua_server->getIMU()->getIMUData();
+   /* Reading the pressure here, it seems like it is nessersary to read pressure/humidity in order to get the temperature value, no idea why */
    if (ua_server->getRTPressure() != NULL)
    {
       ua_server->getRTPressure()->pressureRead(imuData);
    }
    UA_Float temp = imuData.temperature;
+   /* Copy the data value into a variant */
    UA_Variant_setScalarCopy(&dataValue->value, &temp, &UA_TYPES[UA_TYPES_FLOAT]);
    dataValue->hasValue = true;
    return UA_STATUSCODE_GOOD;
@@ -51,7 +55,7 @@ static UA_StatusCode readCurrentHumid(UA_Server *server, const UA_NodeId *sessio
    return UA_STATUSCODE_GOOD;
 }
 
-/* Add the nodes */
+/* Add the nodes as data source nodes */
 void Server::addNodes()
 {
    UA_VariableAttributes myVar = UA_VariableAttributes_default;
@@ -73,8 +77,6 @@ void Server::addNodes()
                                      variableTypeNodeId, myVar,
                                      tempDataSource, this, NULL);
                                         
-                                        
-   
    myVar = UA_VariableAttributes_default;
    myVar.description = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("The pressure reading from the Pi Sense Hat"));
    myVar.displayName = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("Pressure"));
@@ -113,9 +115,7 @@ void Server::addNodes()
                                      variableTypeNodeIdHumid, myVar,
                                      humidDataSource, this, NULL);
    
-   
    UA_Variant_deleteMembers(&myVar.value);
-
 }
 
 /* Start the server */

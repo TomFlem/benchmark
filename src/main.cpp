@@ -26,8 +26,6 @@ int main()
    /* Run the server, will continue running until 'running = false' from cntrl+c */
    ua_server.runServer(&running);
    
-
-   
    /* Stop the server */
    ua_server.stopServer();
    return 0;

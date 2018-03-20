@@ -16,11 +16,12 @@ public:
    bool setupServer(int);
    bool stopServer();
    bool runServer(bool *);
-
+   
    RTIMU * getIMU();
    RTPressure * getRTPressure();
    RTHumidity * getRTHumidity();
 private:  
+
    UA_Server *server;
    RTIMUSettings *settings;
    RTIMU *imu;
