@@ -12,8 +12,9 @@ public:
    Server ();
    ~Server ();
 
-   bool startServer(int,bool *);
+   bool setupServer(int);
    bool stopServer();
+   bool runServer(bool *);
 private:  
    UA_Server *server;
    

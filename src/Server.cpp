@@ -50,7 +50,7 @@ void Server::addNodes()
 }
 
 /* Start the server */
-bool Server::startServer(int port, bool * running)
+bool Server::setupServer(int port)
 {
    /* Create Default Config */
    UA_ServerConfig *config = UA_ServerConfig_new_minimal(port, NULL);
@@ -60,13 +60,17 @@ bool Server::startServer(int port, bool * running)
    
    /* Add the nodes we require */
    addNodes();
-   
-   /* Run the server */
-   UA_Server_run(server, running);
+
   
    return true;
 }
 
+bool Server::runServer(bool * running)
+{     
+   /* Run the server */
+   UA_Server_run(server, running);
+   return true;
+}
 bool Server::stopServer()
 {
     UA_Server_delete(server);
