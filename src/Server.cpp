@@ -1,6 +1,5 @@
 #include "Server.h"
-
- #define C_TEXT( text ) ((char*)std::string( text ).c_str())
+#include "main.h"
  
 namespace server
 {

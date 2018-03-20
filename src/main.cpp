@@ -1,4 +1,6 @@
+#include "main.h"
 #include "Server.h"
+#include "Client.h"
 
 #include <csignal>
 
@@ -19,7 +21,10 @@ int main()
    /* Start the server */
    ua_server.startServer(4840,&running);
    
-   while (true)
+   client::Client ua_client = client::Client();
+   /* Connect with default address and port */
+   ua_client.setupSensorPoller(C_TEXT("opc.tcp://localhost:4840"));
+   while (running)
    {
    
    }
