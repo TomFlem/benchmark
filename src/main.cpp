@@ -1,6 +1,5 @@
 #include "main.h"
 #include "Server.h"
-#include "Client.h"
 
 #include <csignal>
 #include <thread>
@@ -13,20 +12,6 @@ static void stopHandler(int sign)
    running = false;
 }
 
-void pollSensors(client::Client * ua_client,bool * running)
-{
-   sleep(1);
-     
-   /* Connect with default address and port */
-   ua_client->setupSensorPoller(C_TEXT("opc.tcp://localhost:4840"));
-   
-   while (*running)
-   {
-      std::cout<<"TEST"<<std::endl;
-      //ua_client->runSensorPoller();
-      sleep(5);
-   }
-}
 
 int main()
 {
@@ -37,12 +22,6 @@ int main()
    
    /* Start the server */
    ua_server.setupServer(4840);
-   
-   /* Create the client */
-   client::Client ua_client = client::Client();
-    
-   /* Start Sensor Polling Thread */
-   std::thread t1(pollSensors,&ua_client,&running);/* Start the pubPoller */
    
    /* Run the server, will continue running until 'running = false' from cntrl+c */
    ua_server.runServer(&running);

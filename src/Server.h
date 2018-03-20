@@ -17,6 +17,10 @@ public:
    bool runServer(bool *);
 private:  
    UA_Server *server;
+   /*RTIMUSettings *settings;
+   RTIMU *imu;
+   RTPressure *pressure;
+   RTHumidity *humidity;*/
    
    void addNodes();
 };

@@ -15,7 +15,7 @@ LIB_PATH =
 
 LDFLAGS =
 
-CPPFLAGS = -Wall -lRTIMULib -pthread 
+CPPFLAGS = -Wall -lRTIMULib
 
 CFLAGS = -c -o
 

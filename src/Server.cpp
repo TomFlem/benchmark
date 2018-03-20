@@ -6,6 +6,44 @@ namespace server
 /* Constructor */
 Server::Server(){} 
 
+static UA_StatusCode readCurrentTemp(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
+   const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
+{
+   RTIMU_DATA imuData = imu->getIMUData();
+   UA_Float temp = imuData.temperature;
+   UA_Variant_setScalarCopy(&dataValue->value, &temp, &UA_TYPES[UA_TYPES_FLOAT]);
+   dataValue->hasValue = true;
+   return UA_STATUSCODE_GOOD;
+}
+
+static UA_StatusCode readCurrentPress(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
+   const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
+{
+   RTIMU_DATA imuData = imu->getIMUData();
+   if (pressure != NULL)
+   {
+      pressure->pressureRead(imuData);
+   }
+   UA_Float press = imuData.pressure;
+   UA_Variant_setScalarCopy(&dataValue->value, &press, &UA_TYPES[UA_TYPES_FLOAT]);
+   dataValue->hasValue = true;
+   return UA_STATUSCODE_GOOD;
+}
+
+static UA_StatusCode readCurrentHumid(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
+   const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
+{
+   RTIMU_DATA imuData = imu->getIMUData();
+   if (humidity != NULL)
+   {
+      humidity->humidityRead(imuData);
+   }
+   UA_Float humid = imuData.humidity;
+   UA_Variant_setScalarCopy(&dataValue->value, &humid, &UA_TYPES[UA_TYPES_FLOAT]);
+   dataValue->hasValue = true;
+   return UA_STATUSCODE_GOOD;
+}
+
 /* Add the nodes */
 void Server::addNodes()
 {
@@ -14,37 +52,61 @@ void Server::addNodes()
    myVar.displayName = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("Temperature"));
    myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
    myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
-   UA_Float myTemp = 0.5;
-   UA_Variant_setScalarCopy(&myVar.value, &myTemp, &UA_TYPES[UA_TYPES_FLOAT]);
+
    const UA_QualifiedName myTempName = UA_QUALIFIEDNAME(1, C_TEXT("Temperature"));
    const UA_NodeId myTempNodeId = UA_NODEID_STRING(1, C_TEXT("Temperature"));
-   UA_Server_addVariableNode(server, myTempNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
-   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myTempName, UA_NODEID_NULL, myVar, NULL, NULL);
+   UA_NodeId parentNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
+   UA_NodeId parentReferenceNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
+   UA_NodeId variableTypeNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE);
+   
+   UA_DataSource tempDataSource;
+   tempDataSource.read = readCurrentTemp;
+   UA_Server_addDataSourceVariableNode(server, myTempNodeId, parentNodeId,
+                                     parentReferenceNodeId, myTempName,
+                                     variableTypeNodeId, myVar,
+                                     tempDataSource, NULL, NULL);
+                                        
+                                        
    
    myVar = UA_VariableAttributes_default;
    myVar.description = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("The pressure reading from the Pi Sense Hat"));
    myVar.displayName = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("Pressure"));
    myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
    myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
-   UA_Float myPress = 0.5;
-   UA_Variant_setScalarCopy(&myVar.value, &myPress, &UA_TYPES[UA_TYPES_FLOAT]);
+
    const UA_QualifiedName myPressName = UA_QUALIFIEDNAME(1, C_TEXT("Pressure"));
    const UA_NodeId myPressNodeId = UA_NODEID_STRING(1, C_TEXT("Pressure"));
-   UA_Server_addVariableNode(server, myPressNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
-   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myPressName, UA_NODEID_NULL, myVar, NULL, NULL);
-   UA_Variant_deleteMembers(&myVar.value);
+   UA_NodeId parentNodeIdPress = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
+   UA_NodeId parentReferenceNodeIdPress = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
+   UA_NodeId variableTypeNodeIdPress = UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE);
+   
+   UA_DataSource pressDataSource;
+   pressDataSource.read = readCurrentPress;
+   UA_Server_addDataSourceVariableNode(server, myPressNodeId, parentNodeIdPress,
+                                     parentReferenceNodeIdPress, myPressName,
+                                     variableTypeNodeIdPress, myVar,
+                                     pressDataSource, NULL, NULL);
    
    myVar = UA_VariableAttributes_default;
    myVar.description = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("The humidity reading from the Pi Sense Hat"));
    myVar.displayName = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("Humidity"));
    myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
    myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
-   UA_Float myHumid = 0.5;
-   UA_Variant_setScalarCopy(&myVar.value, &myHumid, &UA_TYPES[UA_TYPES_FLOAT]);
+
    const UA_QualifiedName myHumidName = UA_QUALIFIEDNAME(1, C_TEXT("Humidity"));
    const UA_NodeId myHumidNodeId = UA_NODEID_STRING(1, C_TEXT("Humidity"));
-   UA_Server_addVariableNode(server, myHumidNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
-   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myHumidName, UA_NODEID_NULL, myVar, NULL, NULL);
+   UA_NodeId parentNodeIdHumid = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
+   UA_NodeId parentReferenceNodeIdHumid = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
+   UA_NodeId variableTypeNodeIdHumid = UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE);
+   
+   UA_DataSource humidDataSource;
+   humidDataSource.read = readCurrentHumid;
+   UA_Server_addDataSourceVariableNode(server, myHumidNodeId, parentNodeIdHumid,
+                                     parentReferenceNodeIdHumid, myHumidName,
+                                     variableTypeNodeIdHumid, myVar,
+                                     humidDataSource, NULL, NULL);
+   
+   
    UA_Variant_deleteMembers(&myVar.value);
 
 }
@@ -58,9 +120,36 @@ bool Server::setupServer(int port)
    /* Create the server using the default config */
    server = UA_Server_new(config);
    
+   
    /* Add the nodes we require */
    addNodes();
 
+   std::cout<<"Setup Sensors"<<std::endl;
+   /* Setup sensor monitoring */
+   settings = new RTIMUSettings("RTIMULib");
+   imu = RTIMU::createIMU(settings);
+  
+   pressure = RTPressure::createPressure(settings);
+   humidity = RTHumidity::createHumidity(settings);
+
+   imu->IMUInit();
+   imu->setSlerpPower(0.02);
+   imu->setGyroEnable(true);
+   imu->setAccelEnable(true);
+   imu->setCompassEnable(true);
+
+   //  set up pressure sensor
+   if (pressure != NULL)
+   {
+      std::cout<<"Init Pressure"<<std::endl;
+      pressure->pressureInit();
+   }
+   //  set up humidity sensor
+   if (humidity != NULL)
+   {
+      std::cout<<"Init Humidity"<<std::endl;
+      humidity->humidityInit();
+   }
   
    return true;
 }
