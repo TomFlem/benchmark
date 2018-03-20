@@ -9,7 +9,12 @@ Server::Server(){}
 static UA_StatusCode readCurrentTemp(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
    const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
 {
-   RTIMU_DATA imuData = imu->getIMUData();
+   server::Server * ua_server = (server::Server*)nodeContext;
+   RTIMU_DATA imuData = ua_server->getIMU()->getIMUData();
+   if (ua_server->getRTPressure() != NULL)
+   {
+      ua_server->getRTPressure()->pressureRead(imuData);
+   }
    UA_Float temp = imuData.temperature;
    UA_Variant_setScalarCopy(&dataValue->value, &temp, &UA_TYPES[UA_TYPES_FLOAT]);
    dataValue->hasValue = true;
@@ -19,10 +24,11 @@ static UA_StatusCode readCurrentTemp(UA_Server *server, const UA_NodeId *session
 static UA_StatusCode readCurrentPress(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
    const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
 {
-   RTIMU_DATA imuData = imu->getIMUData();
-   if (pressure != NULL)
+   server::Server * ua_server = (server::Server*)nodeContext;
+   RTIMU_DATA imuData = ua_server->getIMU()->getIMUData();
+   if (ua_server->getRTPressure() != NULL)
    {
-      pressure->pressureRead(imuData);
+      ua_server->getRTPressure()->pressureRead(imuData);
    }
    UA_Float press = imuData.pressure;
    UA_Variant_setScalarCopy(&dataValue->value, &press, &UA_TYPES[UA_TYPES_FLOAT]);
@@ -33,10 +39,11 @@ static UA_StatusCode readCurrentPress(UA_Server *server, const UA_NodeId *sessio
 static UA_StatusCode readCurrentHumid(UA_Server *server, const UA_NodeId *sessionId, void *sessionContext,
    const UA_NodeId *nodeId, void *nodeContext, UA_Boolean sourceTimeStamp, const UA_NumericRange *range, UA_DataValue *dataValue) 
 {
-   RTIMU_DATA imuData = imu->getIMUData();
-   if (humidity != NULL)
+   server::Server * ua_server = (server::Server*)nodeContext;
+   RTIMU_DATA imuData = ua_server->getIMU()->getIMUData();
+   if (ua_server->getRTHumidity() != NULL)
    {
-      humidity->humidityRead(imuData);
+      ua_server->getRTHumidity()->humidityRead(imuData);
    }
    UA_Float humid = imuData.humidity;
    UA_Variant_setScalarCopy(&dataValue->value, &humid, &UA_TYPES[UA_TYPES_FLOAT]);
@@ -64,7 +71,7 @@ void Server::addNodes()
    UA_Server_addDataSourceVariableNode(server, myTempNodeId, parentNodeId,
                                      parentReferenceNodeId, myTempName,
                                      variableTypeNodeId, myVar,
-                                     tempDataSource, NULL, NULL);
+                                     tempDataSource, this, NULL);
                                         
                                         
    
@@ -85,7 +92,7 @@ void Server::addNodes()
    UA_Server_addDataSourceVariableNode(server, myPressNodeId, parentNodeIdPress,
                                      parentReferenceNodeIdPress, myPressName,
                                      variableTypeNodeIdPress, myVar,
-                                     pressDataSource, NULL, NULL);
+                                     pressDataSource, this, NULL);
    
    myVar = UA_VariableAttributes_default;
    myVar.description = UA_LOCALIZEDTEXT(C_TEXT("en-US"), C_TEXT("The humidity reading from the Pi Sense Hat"));
@@ -104,7 +111,7 @@ void Server::addNodes()
    UA_Server_addDataSourceVariableNode(server, myHumidNodeId, parentNodeIdHumid,
                                      parentReferenceNodeIdHumid, myHumidName,
                                      variableTypeNodeIdHumid, myVar,
-                                     humidDataSource, NULL, NULL);
+                                     humidDataSource, this, NULL);
    
    
    UA_Variant_deleteMembers(&myVar.value);
@@ -166,7 +173,20 @@ bool Server::stopServer()
     return true;
 }
 
+RTIMU * Server::getIMU()
+{
+   return imu;
+}
 
+RTPressure * Server::getRTPressure()
+{
+   return pressure;
+}
+
+RTHumidity * Server::getRTHumidity()
+{
+   return humidity;
+}
 
 /* Destructor */
 Server::~Server (){}

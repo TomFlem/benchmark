@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <iostream>
 
+#include "RTIMULib.h"
 #include "open62541.h"
 namespace server
 {
@@ -15,12 +16,16 @@ public:
    bool setupServer(int);
    bool stopServer();
    bool runServer(bool *);
+
+   RTIMU * getIMU();
+   RTPressure * getRTPressure();
+   RTHumidity * getRTHumidity();
 private:  
    UA_Server *server;
-   /*RTIMUSettings *settings;
+   RTIMUSettings *settings;
    RTIMU *imu;
    RTPressure *pressure;
-   RTHumidity *humidity;*/
+   RTHumidity *humidity;
    
    void addNodes();
 };
